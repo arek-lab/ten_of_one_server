@@ -4,9 +4,17 @@ const { COLLECTION_NAME } = process.env;
 const { StatusCodes } = require('http-status-codes');
 const generateOpinion = require('../utils/openai');
 const contextFormatter = require('../utils/contextFormatter');
+const { containsProfanity } = require('../utils/profanityChecker');
 
 const getOpinion = async (req, res) => {
   const { texts: question } = req.body;
+
+  const profanityCheck = await containsProfanity(...question);
+  if (profanityCheck) {
+    return res.status(StatusCodes.OK).json({
+      opinion: profanityCheck,
+    });
+  }
 
   const {
     data: { embeddings },
