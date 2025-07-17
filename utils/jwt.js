@@ -18,7 +18,7 @@ const attachCookiesToResponse = ({ res, user, refreshToken }) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     signed: true,
-    maxAge: new Date(Date.now() + shortExp),
+    maxAge: shortExp,
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   });
   res.cookie('refreshToken', refreshTokenJWT, {
