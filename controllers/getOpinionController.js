@@ -1,5 +1,6 @@
 const qdrantClient = require('../utils/qdrant_client');
 const axios = require('axios');
+const User = require('../models/User');
 const { COLLECTION_NAME } = process.env;
 const { StatusCodes } = require('http-status-codes');
 const generateOpinion = require('../utils/openai');
@@ -7,6 +8,15 @@ const contextFormatter = require('../utils/contextFormatter');
 const { containsProfanity } = require('../utils/profanityChecker');
 
 const getOpinion = async (req, res) => {
+  const creditsObj = await User.findOne({ _id: req.user.userId }).select(
+    'credits'
+  );
+  const credits = creditsObj.credits;
+  if (credits.credits <= 0)
+    return res.status(StatusCodes.OK).json({
+      opinion:
+        'Liczba dostpenych kredytów wynosi 0. Skontaktuj się praconikiem obsługi klienta, aby uzyskać więcej informacji.',
+    });
   const { texts: question } = req.body;
 
   const profanityCheck = await containsProfanity(...question);
@@ -50,8 +60,13 @@ const getOpinion = async (req, res) => {
   const context = contextFormatter(result);
 
   const opinion = await generateOpinion(question, context);
+  const updatedCredits = await User.findByIdAndUpdate(
+    req.user.userId,
+    { $inc: { credits: -1 } },
+    { new: true }
+  ).select('credits');
 
-  res.status(StatusCodes.OK).json({ opinion });
+  res.status(StatusCodes.OK).json({ opinion, credits: updatedCredits.credits });
 };
 
 module.exports = {
