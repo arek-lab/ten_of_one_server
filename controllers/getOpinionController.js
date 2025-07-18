@@ -23,6 +23,7 @@ const getOpinion = async (req, res) => {
   if (profanityCheck) {
     return res.status(StatusCodes.OK).json({
       opinion: profanityCheck,
+      credits,
     });
   }
 
